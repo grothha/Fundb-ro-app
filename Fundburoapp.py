@@ -5,10 +5,10 @@ import tensorflow as tf
 import os
 
 # --- PFAD-KONFIGURATION ---
-# Wir suchen einfach im aktuellen Verzeichnis nach dem Ordner "model"
+# Wir suchen die Dateien nun direkt auf der gleichen Ebene wie dieses Skript
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model", "keras_model.h5")
-LABEL_PATH = os.path.join(BASE_DIR, "model", "labels.txt")
+MODEL_PATH = os.path.join(BASE_DIR, "keras_model.h5")
+LABEL_PATH = os.path.join(BASE_DIR, "labels.txt")
 
 # --- FUNKTIONEN ---
 @st.cache_resource
