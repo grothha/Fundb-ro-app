@@ -164,3 +164,4 @@ if uploaded_file:
 # 📎 FOOTER
 # ================================
 st.sidebar.info("💡 Tipp: Gute Beleuchtung + neutraler Hintergrund verbessern die Erkennung.")
+```
