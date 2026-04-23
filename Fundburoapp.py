@@ -7,8 +7,16 @@ import os
 # Seite konfigurieren
 st.set_page_config(page_title="KI Fundbüro", layout="centered")
 
+# HIER IST DIE ÄNDERUNG: Wir suchen nach deinem Dateinamen
+MODEL_FILENAME = "keras_model.h5"
+
 def find_model_path(target_file):
     """Durchsucht das gesamte Projekt nach der Modelldatei."""
+    # Erst im Hauptverzeichnis schauen
+    if os.path.exists(target_file):
+        return target_file
+    
+    # Dann in allen Unterordnern suchen
     for root, dirs, files in os.walk("."):
         if target_file in files:
             return os.path.join(root, target_file)
@@ -16,23 +24,24 @@ def find_model_path(target_file):
 
 @st.cache_resource
 def load_model():
-    # Wir suchen nach 'model.h5' egal in welchem Ordner
-    path = find_model_path("model.h5")
+    path = find_model_path(MODEL_FILENAME)
     
     if path:
         try:
+            # Modell laden
             model = tf.keras.models.load_model(path)
             return model, path
         except Exception as e:
-            st.error(f"Fehler beim Laden: {e}")
+            st.error(f"Fehler beim Laden der Datei {path}: {e}")
             return None, None
     else:
-        # Fehlermeldung mit Debug-Info
-        st.error("Modell 'model.h5' wurde im gesamten Projekt nicht gefunden!")
-        st.write("Vorhandene Dateien im Hauptverzeichnis:", os.listdir("."))
+        # Fehlermeldung, falls die Datei gar nicht existiert
+        st.error(f"Die Datei '{MODEL_FILENAME}' wurde nicht gefunden!")
+        st.write("Gefundene Dateien im Ordner:", os.listdir("."))
         return None, None
 
 def predict_image(model, image):
+    # Vorverarbeitung
     img = image.resize((224, 224))
     img_array = np.array(img)
     if img_array.shape[-1] == 4:
@@ -46,7 +55,7 @@ def main():
     model, path = load_model()
     
     if path:
-        st.success(f"Modell erfolgreich geladen aus: {path}")
+        st.success(f"Modell geladen: {path}")
 
     uploaded_file = st.file_uploader("Bild des Fundstücks hochladen", type=["jpg", "png", "jpeg"])
 
@@ -56,18 +65,20 @@ def main():
         
         if st.button("Gegenstand erkennen"):
             if model:
-                prediction = predict_image(model, image)
-                
-                # BITTE HIER DEINE KLASSENNAMEN ANPASSEN:
-                labels = ["Schlüssel", "Geldbeutel", "Handy", "Brille", "Regenschirm"]
-                
-                idx = np.argmax(prediction[0])
-                if idx < len(labels):
-                    st.metric("Ergebnis", labels[idx])
-                else:
-                    st.write("Unbekannte Klasse:", idx)
+                with st.spinner("KI denkt nach..."):
+                    prediction = predict_image(model, image)
+                    
+                    # BITTE PASS DIESE LISTE AN DEINE KLASSEN AN:
+                    labels = ["Schlüssel", "Geldbeutel", "Handy", "Brille", "Regenschirm"]
+                    
+                    idx = np.argmax(prediction[0])
+                    if idx < len(labels):
+                        st.metric("Ergebnis", labels[idx])
+                        st.write(f"Sicherheit: {np.max(prediction[0])*100:.2f}%")
+                    else:
+                        st.write("Klasse erkannt, aber kein Name in der Liste hinterlegt.")
             else:
-                st.error("Aktion nicht möglich, da Modell fehlt.")
+                st.error("Modell ist nicht bereit.")
 
 if __name__ == "__main__":
     main()
